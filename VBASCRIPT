@@ -1,0 +1,114 @@
+Sub stocks()
+
+    Dim ws As Worksheet
+
+    ' Iterate through all worksheets in the workbook
+    For Each ws In ThisWorkbook.Sheets
+        Dim ticker As String
+        Dim Vol_Total As Double
+        Vol_Total = 0
+        Dim Yearly_Change As Double
+        Dim Yearly_PercentChange As Double
+        Dim closing_price As Double
+        Dim opening_price As Double
+        closing_price = 0
+        opening_price = 0
+        Dim Summary_Table_Row As Integer
+        Summary_Table_Row = 2
+
+        ' Initialize variables to track the greatest % increase, % decrease, and total volume for the current worksheet
+        Dim MaxIncreaseTicker As String
+        Dim MaxDecreaseTicker As String
+        Dim MaxVolumeTicker As String
+        Dim MaxIncrease As Double
+        Dim MaxDecrease As Double
+        Dim MaxVolume As Double
+        MaxIncrease = 0
+        MaxDecrease = 0
+        MaxVolume = 0
+        
+        lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+
+        ' Loop through all rows in the current worksheet
+        For i = 2 To lastRow
+            ' Check if we are at the first row
+            If i = 2 Then
+                ' Set the first opening price for the first ticker
+                Set firstcell = ws.Cells(i, 3) ' Assuming column C contains opening prices
+                opening_price = firstcell.Value
+            End If
+
+            ' Check if we are still within the same ticker, if not...
+            If ws.Cells(i + 1, 1).Value <> ws.Cells(i, 1).Value Then
+                ' Set the ticker
+                ws.Cells(1, 9).Value = "Ticker"
+                ticker = ws.Cells(i, 1).Value
+                ' Add to the Volume Total
+                Vol_Total = Vol_Total + ws.Cells(i, 7).Value
+                ' Print the Ticker in the Summary Table
+                ws.Range("I" & Summary_Table_Row).Value = ticker
+                ' Print the Volume to the Summary Table
+                ws.Cells(1, 12).Value = "Volume Total"
+                ws.Range("L" & Summary_Table_Row).Value = Vol_Total
+                ' Calculate and print the Yearly Change in the Summary Table
+                closing_price = ws.Cells(i, 6).Value
+                Yearly_Change = closing_price - opening_price
+                ws.Range("J" & Summary_Table_Row).Value = Yearly_Change
+                ws.Cells(1, 10).Value = "Yearly Change"
+                Yearly_PercentChange = ((closing_price - opening_price) / opening_price) * 100
+                ws.Range("K" & Summary_Table_Row).Value = Yearly_PercentChange & "%"
+                ws.Cells(1, 11).Value = "Percentage Change"
+                ' Apply conditional formatting to change cell color to green if Yearly Change is positive
+                If Yearly_Change > 0 Then
+                    ws.Range("J" & Summary_Table_Row).Interior.Color = RGB(0, 255, 0)
+                ElseIf Yearly_Change <= 0 Then
+                    ws.Range("J" & Summary_Table_Row).Interior.Color = RGB(255, 0, 0)
+                End If
+
+                ' Update the variables for greatest % increase and % decrease
+                If Yearly_PercentChange > MaxIncrease Then
+                    MaxIncrease = Yearly_PercentChange
+                    MaxIncreaseTicker = ticker
+                ElseIf Yearly_PercentChange < MaxDecrease Then
+                    MaxDecrease = Yearly_PercentChange
+                    MaxDecreaseTicker = ticker
+                End If
+
+                ' Update the variable for greatest total volume
+                If Vol_Total > MaxVolume Then
+                    MaxVolume = Vol_Total
+                    MaxVolumeTicker = ticker
+                End If
+
+                ' Add one to the summary table row
+                Summary_Table_Row = Summary_Table_Row + 1
+                ' Reset the Volume Total
+                Vol_Total = 0
+                ' Set the first opening price for the next ticker
+                Set firstcell = ws.Cells(i + 1, 3)
+                opening_price = firstcell.Value
+            Else
+                ' Add to the Volume Total
+                Vol_Total = Vol_Total + ws.Cells(i, 7).Value
+            End If
+        Next i
+
+        ' Print the stock with the greatest % increase, % decrease, and greatest total volume for the current worksheet
+        ws.Range("N2").Value = "Greatest % Increase"
+        ws.Range("O2").Value = MaxIncreaseTicker
+        ws.Range("P2").Value = MaxIncrease & "%"
+
+        ws.Range("N3").Value = "Greatest % Decrease"
+        ws.Range("O3").Value = MaxDecreaseTicker
+        ws.Range("P3").Value = MaxDecrease & "%"
+
+        ws.Range("N4").Value = "Greatest Total Volume"
+        ws.Range("O4").Value = MaxVolumeTicker
+        ws.Range("P4").Value = MaxVolume
+
+    Next ws
+
+End Sub
+
+
+
